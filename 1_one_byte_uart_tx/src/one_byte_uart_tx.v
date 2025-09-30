@@ -12,8 +12,8 @@ module one_byte_uart_tx(
     //1 波特率115200，时钟频率50MHz
     parameter CLK_FREQ = 50000000;
     parameter BAUD_RATE = 115200;
-    // parameter BAUD_CNT = CLK_FREQ / BAUD_RATE;  //434
-    parameter BAUD_CNT = 4; //测试用
+    parameter BAUD_CNT = CLK_FREQ / BAUD_RATE;  //434
+    // parameter BAUD_CNT = 4; //仿真用
 
     //2 波特率产生器，每434个系统时钟周期，产生一个波特率脉冲
     //2.1 系统时钟计数器
@@ -49,7 +49,7 @@ module one_byte_uart_tx(
     reg tx_en_prev;
     reg [1:0] tx_en_edge;
 
-    //3.1 tx_en上升沿检测(需要补充key_filter模块或程控边沿)
+    //3.1 tx_en上升沿检测(需要补充消抖模块或程控边沿)
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
             tx_en_prev <= 1'b0;
@@ -89,7 +89,7 @@ module one_byte_uart_tx(
                         UART_STATE <= UART_DONE;
                     else if(baud_tick) begin
                         bit_cnt <= bit_cnt + 1'b1;
-                        tx_out <= tx_shift_reg[bit_cnt];  //发送最低位
+                        tx_out <= tx_shift_reg[bit_cnt];  //发送对应位
                     end
                     else
                         UART_STATE <= UART_SEND;
