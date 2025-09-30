@@ -1,4 +1,4 @@
 # Verilog
-Verilog learning
+Verilog learning :)
 
-1. one_byte_uart_tx
+## 1 one_byte_uart_tx
