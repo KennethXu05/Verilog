@@ -15,10 +15,11 @@ Verilog learning.
     乘法器（内含加法器略）  
     4.1 原码乘法器  
     用一段式状态机实现“右移”乘法
+    补：添加三段式
     4.2 补码乘法器  
 ## 5 FSM template  
     以0101可重叠序列检测为例，设计一个标准的三段式moore型状态机:  
     1 状态寄存器  
     2 状态转移  
     3 输出  
-    三段式moore型更稳定  
+    三段式moore型更稳定，repository中其他代码理应向本template看齐，“不要把Verilog写成C语言！”  
