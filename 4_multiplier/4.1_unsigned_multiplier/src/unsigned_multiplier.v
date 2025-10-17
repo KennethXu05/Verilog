@@ -68,13 +68,17 @@ module unsigned_multiplier(
     end
 
     always @(*) begin
-        case(current_state)
-            IDLE: next_state = en ? JUDGE : IDLE;
-            JUDGE: next_state = SHIFT;
-            SHIFT: next_state = (cnt == 2'b11) ? FINISH : JUDGE;
-            FINISH: next_state = IDLE;
-            default: next_state = IDLE;
-        endcase
+        if(!rst_n)
+            next_state = IDLE;
+        else begin
+            case(current_state)
+                IDLE: next_state = en ? JUDGE : IDLE;
+                JUDGE: next_state = SHIFT;
+                SHIFT: next_state = (cnt == 2'b11) ? FINISH : JUDGE;
+                FINISH: next_state = IDLE;
+                default: next_state = IDLE;
+            endcase
+        end
     end
 
     always @(posedge clk or negedge rst_n) begin

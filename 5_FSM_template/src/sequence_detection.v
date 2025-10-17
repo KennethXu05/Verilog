@@ -21,30 +21,35 @@ module sequence_detection(
             current_state <= next_state;
     end
 
-    //2 状态转移组合逻辑
-    always @(*) begin
-        case (current_state)
-            S0: next_state = (in == 1'b0) ? S1 : S0;
-            S1: next_state = (in == 1'b1) ? S2 : S1;
-            S2: next_state = (in == 1'b0) ? S3 : S0;
-            S3: next_state = (in == 1'b1) ? S4 : S1;
-            S4: next_state = (in == 1'b1) ? S0 : S3;
-            default: next_state = S0;
-        endcase
-    end 
-
-    //3 输出时序逻辑
-    always @(posedge clk or negedge rst_n) begin
+    //2 下一个状态逻辑组合逻辑
+    // always @(*) begin
+    always @(current_state or in or rst_n) begin    //写清楚敏感量列表
         if(!rst_n)
-            out <= 1'b0;
+            next_state = S0;
         else begin
             case (current_state)
-                S0: out <= 1'b0;
-                S1: out <= 1'b0;
-                S2: out <= 1'b0;
-                S3: out <= 1'b0;
-                S4: out <= 1'b1;
-                default: out <= 1'b0;
+                S0: next_state = (in == 1'b0) ? S1 : S0;
+                S1: next_state = (in == 1'b1) ? S2 : S1;
+                S2: next_state = (in == 1'b0) ? S3 : S0;
+                S3: next_state = (in == 1'b1) ? S4 : S1;
+                S4: next_state = (in == 1'b1) ? S0 : S3;
+                default: next_state = S0;
+            endcase
+        end
+    end 
+
+    //3 输出逻辑组合逻辑
+    always @(current_state or rst_n) begin
+        if(!rst_n)
+            out = 1'b0;
+        else begin
+            case (current_state)
+                S0: out = 1'b0;
+                S1: out = 1'b0;
+                S2: out = 1'b0;
+                S3: out = 1'b0;
+                S4: out = 1'b1;
+                default: out = 1'b0;
             endcase
         end
     end

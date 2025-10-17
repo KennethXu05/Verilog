@@ -14,8 +14,8 @@ Verilog learning.
 ## 4 multiplier  
     乘法器（内含加法器略）  
     4.1 原码乘法器  
-    用一段式状态机实现“右移”乘法
-    补：添加三段式
+    用一段式状态机实现“右移”乘法  
+    补：添加三段式  
     4.2 补码乘法器  
     Booth法，状态机有改进空间  
 ## 5 FSM template  
@@ -24,3 +24,5 @@ Verilog learning.
     2 状态转移  
     3 输出  
     三段式moore型更稳定，repository中其他代码理应向本template看齐，“不要把Verilog写成C语言！”  
+    补：完善敏感量列表，修正缺失的初始态，fsm_sim_1.png对应状态机第三段为时序逻辑，fsm_sim_2.png对应状态机第三段为组合逻辑  
+    
