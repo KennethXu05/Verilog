@@ -8,7 +8,7 @@ module unsigned_multiplier(
     output reg [7:0] p
 );
     reg [9:0] r;
-    reg [1:0] cnt;
+    reg [1:0] cnt;  //移位计数器
 
     reg [1:0] STATE;
     localparam IDLE = 2'b00;
@@ -73,6 +73,7 @@ module unsigned_multiplier(
             JUDGE: next_state = SHIFT;
             SHIFT: next_state = (cnt == 2'b11) ? FINISH : JUDGE;
             FINISH: next_state = IDLE;
+            default: next_state = IDLE;
         endcase
     end
 
