@@ -11,8 +11,11 @@ wire baud_tick;
 wire [8:0] baud_cnt;
 
 // 实例化待测模块
-one_byte_uart_tx u_one_byte_uart_tx 
-(
+one_byte_uart_tx 
+#(
+    .CLK_FREQ(50000000),  //时钟频率
+    .BAUD_RATE(115200)    //波特率
+) u_one_byte_uart_tx(
     .clk      (clk),
     .rst_n    (rst_n),
     .tx_en    (tx_en),
