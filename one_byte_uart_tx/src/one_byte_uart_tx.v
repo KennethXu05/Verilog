@@ -5,15 +5,17 @@ module one_byte_uart_tx #(
     input clk,
     input rst_n,
     input tx_en,
+
     input [7:0] tx_data,
     output reg tx_out,
     output reg tx_done,
 
-    output reg baud_tick,
+    //仿真调试
+    output reg baud_tick,   
     output reg [15:0] baud_cnt
 );
     //1 波特率115200，时钟频率50MHz
-    // parameter BAUD_CNT = CLK_FREQ / BAUD_RATE;  //真实波特率下，434
+    //parameter BAUD_CNT = CLK_FREQ / BAUD_RATE;  //真实波特率下，434
     localparam BAUD_CNT = 4; //仿真用
 
     //2 波特率产生器，每434个系统时钟周期，产生一个波特率脉冲
@@ -86,7 +88,7 @@ module one_byte_uart_tx #(
     //                     UART_STATE <= UART_IDLE; 
     //             end 
     //             UART_SEND: begin
-    //                 if(bit_cnt == 4'd10)
+    //                 if(bit_cnt == 4'd9)
     //                     UART_STATE <= UART_DONE;
     //                 else if(baud_tick) begin
     //                     bit_cnt <= bit_cnt + 1'b1;
@@ -124,7 +126,7 @@ module one_byte_uart_tx #(
                 else 
                     uart_next_state = UART_IDLE;
             UART_SEND:
-                if(bit_cnt == 4'd10) //延后一拍
+                if(bit_cnt == 4'd9)
                     uart_next_state = UART_DONE;
                 else 
                     uart_next_state = UART_SEND;
