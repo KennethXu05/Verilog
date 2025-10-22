@@ -20,10 +20,10 @@ Verilog and digital IC front-end design learning.
     单字节串口发送  
 ## multiplier
     乘法器（内含加法器略）  
-# unsigned_multiplier  
+### unsigned_multiplier  
     用一段式状态机实现“右移”乘法  
     补：添加三段式  
-# signed_multiplier 
+### signed_multiplier 
     Booth法，状态机有改进空间  
 
     
