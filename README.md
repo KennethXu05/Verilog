@@ -28,9 +28,11 @@ Verilog and digital IC front-end design learning.
     奇分频电路  
     补：消除最终输出由于组合逻辑反馈环带来的锁存器，含仿真波形  
     
-## one_byte_uart_tx  
+## uart
+### 1 one_byte_uart_tx  
     单字节串口发送  
     补：修改状态机，添加仿真波形one_byte_uart_tx_sim.png
-
+### 2 one_byte_uart_rx
+    单字节串口接收，内附考虑毛刺的非理想串口接收仿真
 
     
