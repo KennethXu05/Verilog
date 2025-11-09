@@ -26,7 +26,11 @@ Verilog and digital IC front-end design learning.
 
 ## odd_divider  
     奇分频电路  
-    补：消除最终输出由于组合逻辑反馈环带来的锁存器，含仿真波形  
+    补：消除最终输出由于组合逻辑反馈环带来的锁存器，含仿真波形
+
+## spi
+### spi_master
+    单字节SPI主模式收发，支持四种模式  
     
 ## uart
 ### 1 one_byte_uart_tx  
