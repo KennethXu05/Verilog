@@ -16,7 +16,9 @@ module spi_master #(
     input miso,
     output reg mosi,
     output reg sck,
-    output reg nss
+    output reg nss,
+
+    output sck_toggle_flag
 );  
 
     //data_valid信号上升沿检测
@@ -32,167 +34,146 @@ module spi_master #(
 
     //50%占空比sck时钟信号产生
     reg [7:0] clk_div_cnt;
-    
+    localparam HALF_CNT = (CLK_DIV/2 == 0) ? 1 : (CLK_DIV / 2);    
+    //wire sck_toggle_flag;
+    assign sck_toggle_flag = (clk_div_cnt == (HALF_CNT - 1));
+
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) 
             clk_div_cnt <= 8'd0;
-        else if(clk_div_cnt == (CLK_DIV / 2 - 1))
+        else if(clk_div_cnt == (HALF_CNT - 1))
                 clk_div_cnt <= 8'd0;
         else
                 clk_div_cnt <= clk_div_cnt + 1'b1;
     end
 
-    //1byte数据发送 MOSI FSM
-    reg [1:0] MOSI_current_state;
-    reg [1:0] MOSI_next_state;
-    reg [3:0] MOSI_bit_cnt;
+    always @(posedge clk or negedge rst_n) begin
+        if(!rst_n)
+            sck <= CPOL;   //空闲状态
+        else if(!nss && sck_toggle_flag) begin
+            sck <= ~sck;
+        end
+    end
 
-    localparam MOSI_IDLE = 2'b00;
-    localparam MOSI_SEND = 2'b01;
-    localparam MOSI_DONE = 2'b10;
+    //FSM for MOSI/MISO handling
+    reg [1:0] current_state;
+    reg [1:0] next_state;
+    reg [7:0] flag_cnt;
+
+    localparam IDLE = 2'b00;
+    localparam TRANSFER = 2'b01;
+    localparam WAIT = 2'b10;
+    localparam DONE = 2'b11;
+
+    //移位寄存器
+    reg [7:0] tx_shift;
+    reg [7:0] rx_shift;
 
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n)
-            MOSI_current_state <= MOSI_IDLE;
+            current_state <= IDLE;
         else
-            MOSI_current_state <= MOSI_next_state;
+            current_state <= next_state;
     end
 
     always @(*) begin
-        if(!rst_n)
-            MOSI_next_state = MOSI_IDLE;
-        else begin
-            case(MOSI_current_state)
-                MOSI_IDLE: begin
-                    if(data_valid_rising_edge)
-                        MOSI_next_state = MOSI_SEND;
-                    else 
-                        MOSI_next_state = MOSI_IDLE;
-                end
-                MOSI_SEND: begin
-                    if((MOSI_bit_cnt == 4'd7) && (sck == ~CPOL))
-                        MOSI_next_state = MOSI_DONE;
-                    else
-                        MOSI_next_state = MOSI_SEND;
-                end
-                MOSI_DONE: 
-                    MOSI_next_state = MOSI_IDLE;
-                default: MOSI_next_state = MOSI_IDLE;
-            endcase
-        end
+        case(current_state)
+            IDLE: begin
+                if(data_valid_rising_edge)
+                    next_state = TRANSFER;
+                else
+                    next_state = IDLE;
+            end
+            TRANSFER: begin
+                if(flag_cnt == 8'd15)
+                    next_state = DONE;
+                else
+                    next_state = WAIT;
+            end
+            WAIT: next_state = TRANSFER;
+            DONE: next_state = IDLE;
+            default: next_state = IDLE;
+        endcase
     end
 
     always @(posedge clk or negedge rst_n) begin
         if(!rst_n) begin
-            sck <= CPOL;
             nss <= 1'b1;
-            MOSI_bit_cnt <= 4'd0;
+            flag_cnt <= 8'd0;
             send_completed <= 1'b0;
+            recv_completed <= 1'b0;
+            tx_shift <= 8'd0;
+            rx_shift <= 8'd0;
+            data_recv <= 8'd0;
             mosi <= 1'b0;
         end
         else begin
-            case (MOSI_current_state)
-                MOSI_IDLE: begin
-                    sck <= CPOL;
+            case (current_state)
+                IDLE: begin
                     nss <= 1'b1;
-                    MOSI_bit_cnt <= 4'd0;
+                    flag_cnt <= 8'd0;
                     send_completed <= 1'b0;
-                end
-                MOSI_SEND: begin
-                    if(clk_div_cnt == (CLK_DIV / 2 - 1))
-                        sck <= ~sck;
-                    if(sck == ~CPOL && clk_div_cnt == (CLK_DIV / 2 - 1))    //等效为时钟对应边沿
-                        MOSI_bit_cnt <= MOSI_bit_cnt + 1'b1;
-                    nss <= 1'b0;
-                    send_completed <= 1'b0;
-                    mosi <= data_send[7 - MOSI_bit_cnt];
-                end 
-                MOSI_DONE: begin
-                    sck <= CPOL;
-                    nss <= 1'b1;
-                    send_completed <= 1'b1;
-                end
-                default: begin
-                    sck <= sck;
-                    nss <= nss;
-                    MOSI_bit_cnt <= MOSI_bit_cnt;
-                    send_completed <= send_completed;
-                end
-            endcase
-        end
-    end
-
-    //1byte数据接收 MISO FSM
-    reg [1:0] MISO_current_state;
-    reg [1:0] MISO_next_state;
-    reg [3:0] MISO_bit_cnt;
-    reg [7:0] data_recv_temp;
-    
-    localparam MISO_IDLE = 2'b00;
-    localparam MISO_RECV = 2'b01;
-    localparam MISO_DONE = 2'b10;
-
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n)
-            MISO_current_state <= MISO_IDLE;
-        else
-            MISO_current_state <= MISO_next_state;
-    end
-
-    always @(*) begin
-        if(!rst_n)
-            MISO_next_state = MISO_IDLE;
-        else begin
-            case(MISO_current_state)
-                MISO_IDLE: begin
-                    if(data_valid_rising_edge)
-                        MISO_next_state = MISO_RECV;
-                    else 
-                        MISO_next_state = MISO_IDLE;
-                end
-                MISO_RECV: begin
-                    if((MISO_bit_cnt == 4'd7) && (sck == CPOL))
-                        MISO_next_state = MISO_DONE;
-                    else
-                        MISO_next_state = MISO_RECV;
-                end
-                MISO_DONE: 
-                    MISO_next_state = MISO_IDLE;
-                default: MISO_next_state = MISO_IDLE;
-            endcase
-        end
-    end
-
-    always @(posedge clk or negedge rst_n) begin
-        if(!rst_n) begin
-            MISO_bit_cnt <= 4'd0;
-            recv_completed <= 1'b0;
-            data_recv <= 8'd0;
-            data_recv_temp <= 8'd0;
-        end
-        else begin
-            case (MISO_current_state)
-                MISO_IDLE: begin
-                    MISO_bit_cnt <= 4'd0;
                     recv_completed <= 1'b0;
-                end
-                MISO_RECV: begin
-                    if(sck == CPOL && clk_div_cnt == (CLK_DIV / 2 - 1)) begin    //等效为时钟对应边沿
-                        MISO_bit_cnt <= MISO_bit_cnt + 1'b1;
-                        data_recv_temp [7 - MISO_bit_cnt] <= miso;
+                    rx_shift <= 8'd0;
+                    data_recv <= data_recv;
+                    send_completed <= 1'b0;
+                    recv_completed <= 1'b0;
+                    mosi <= 1'b0;
+                    if (data_valid_rising_edge) begin   //valid上升沿时开始加载数据
+                        tx_shift <= data_send;
+                        nss <= 1'b0;
+                        mosi <= data_send[7];
                     end
+                end
+                TRANSFER: begin
+                    send_completed <= 1'b0;
                     recv_completed <= 1'b0;
-                end 
-                MISO_DONE: begin
-                    data_recv <= data_recv_temp;
+
+                    if(sck_toggle_flag) begin
+                        flag_cnt <= flag_cnt + 1'b1;
+
+                        //CPHA=0:前边沿采样，CPHA=1:后边沿采样
+                        if(CPHA ^ (sck == !CPOL)) begin   
+                            //主设备采样MISO，从设备采集MOSI
+                            mosi <= tx_shift[7];
+                            rx_shift[0] <= miso;
+                        end
+                        else begin
+                            //移位
+                            tx_shift <= {tx_shift[6:0], 1'b0};
+                            rx_shift <= {rx_shift[6:0], 1'b0};
+                        end 
+                    end
+                end
+                WAIT: begin
+                    nss <= nss;
+                    flag_cnt <= flag_cnt;
+                    send_completed <= send_completed;
+                    recv_completed <= recv_completed;
+                    tx_shift <= tx_shift;
+                    rx_shift <= rx_shift;
+                    data_recv <= data_recv;
+                    mosi <= mosi;
+                end
+                DONE: begin
+                    nss <= 1'b1;
+                    data_recv <= rx_shift;
+                    send_completed <= 1'b1;
                     recv_completed <= 1'b1;
+                    mosi <= 1'b0;
                 end
                 default: begin
-                    MISO_bit_cnt <= MISO_bit_cnt;
+                    nss <= nss;
+                    flag_cnt <= flag_cnt;
+                    send_completed <= send_completed;
                     recv_completed <= recv_completed;
+                    tx_shift <= tx_shift;
+                    rx_shift <= rx_shift;
+                    data_recv <= data_recv;
+                    mosi <= mosi;
                 end
             endcase
         end
     end
-    
+
 endmodule
