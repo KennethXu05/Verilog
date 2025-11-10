@@ -1,5 +1,5 @@
 # Verilog
-Verilog and digital IC front-end design learning.  
+Verilog and digital IC design learning.  
 :)  
 
 ## ALU  
