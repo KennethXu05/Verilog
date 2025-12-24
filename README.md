@@ -15,6 +15,14 @@ Verilog and digital IC design learning.
 #### 2.2 signed_multiplier 
     Booth法，状态机有改进空间  
 
+## Cache
+### 1 FIFO
+    简化的 First-In-First-Out（先入先出）缓存替换算法
+### 2 LfU 
+    简化的 Least-Recently-Used（近期最久未使用）缓存替换算法
+### 3 LFU 
+    简化的 Least-Frequently-Used（最不经常使用）缓存替换算法
+    
 ## FSM template  
     以0101可重叠序列检测为例，设计一个标准的三段式moore型状态机:  
     1 状态寄存器  

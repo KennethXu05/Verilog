@@ -9,7 +9,7 @@ module cla_16bit(
     wire [3:0] G;
     wire [3:0] CCout;
 
-    //实例化4个4bit的7418
+    //实例化4个4bit的74181
     simp_alu74181 u_simp_alu74181_0(
         .A    	(A[3:0]     ),
         .B    	(B[3:0]     ),
